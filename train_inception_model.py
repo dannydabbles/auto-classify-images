@@ -33,7 +33,7 @@ print(tf.config.experimental.list_physical_devices(device_type=None))
 for gpu in tf.config.experimental.list_physical_devices(device_type='GPU'):
     tf.config.experimental.set_memory_growth(gpu, True)
 
-image_size = 75
+image_size = 299
 batch_size = 32
 image_dir = os.path.join(project_dir, 'images')
 
@@ -86,7 +86,7 @@ print("INFO: Training started with image size {} and batch size {}".format(image
 base_model = InceptionV3(
     weights='imagenet',
     layers=tf.keras.layers, # See https://github.com/keras-team/keras/pull/9965#issuecomment-549126009
-    input_shape=(image_size, image_size, 3),
+    input_tensor=Input(shape=(image_size, image_size, 3)),
     include_top=False)
 
 # add a global spatial average pooling layer
@@ -108,7 +108,7 @@ for layer in base_model.layers:
 
 # compile the model (should be done *after* setting layers to non-trainable)
 model.compile(
-    optimizer=RMSprop(learning_rate=0.00001, rho=0.9),
+    optimizer=RMSprop(learning_rate=0.0001, rho=0.9),
     loss='categorical_crossentropy',
     metrics=['accuracy'])
 
@@ -154,7 +154,7 @@ for layer in model.layers[249:]:
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
 model.compile(
-    optimizer=SGD(lr=0.000001, momentum=0.9),
+    optimizer=SGD(lr=0.001, momentum=0.9),
     loss='categorical_crossentropy',
     metrics=['accuracy'])
 
