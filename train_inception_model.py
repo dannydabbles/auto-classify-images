@@ -70,7 +70,7 @@ print("Num classes: {}".format(num_classes))
 
 x_train, y_train = training.next()
 
-counter = Counter(training.classes)                          
+counter = Counter(training.classes)
 max_val = float(max(counter.values()))       
 class_weights = {class_id : max_val/num_images for class_id, num_images in counter.items()}
 
@@ -80,6 +80,7 @@ for i in range(min(int(len(x_train)), 10)):
     print("Label: " + label_map[np.where(y_train[i] == 1)[0][0]])
     display(Image.fromarray((x_train[i]*127.5+127.5).astype('uint8'), 'RGB'))
 
+start = datetime.now()
 print("INFO: Training started with image size {} and batch size {}".format(image_size, batch_size))
 
 # create the base pre-trained model
@@ -108,7 +109,7 @@ for layer in base_model.layers:
 
 # compile the model (should be done *after* setting layers to non-trainable)
 model.compile(
-    optimizer=RMSprop(learning_rate=0.0001, rho=0.9),
+    optimizer=RMSprop(learning_rate=0.000005, rho=0.9),
     loss='categorical_crossentropy',
     metrics=['accuracy'])
 
@@ -117,7 +118,7 @@ history = model.fit(
     training,
     class_weight=class_weights,
     #steps_per_epoch=1,
-    epochs=25,
+    epochs=15,
     validation_data=validate,
     #validation_steps=1,
     callbacks=[tensorboard_callback])
@@ -154,7 +155,7 @@ for layer in model.layers[249:]:
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
 model.compile(
-    optimizer=SGD(lr=0.001, momentum=0.9),
+    optimizer=SGD(lr=0.00005, momentum=0.9),
     loss='categorical_crossentropy',
     metrics=['accuracy'])
 
@@ -164,7 +165,7 @@ history = model.fit(
     training,
     class_weight=class_weights,
     #steps_per_epoch=1,
-    epochs=25,
+    epochs=15,
     validation_data=validate,
     #validation_steps=1,
     callbacks=[tensorboard_callback])
@@ -189,3 +190,7 @@ print('test loss, test acc:', results)
 print('\n# Generate predictions for 3 samples')
 print("INFO: Predictions is {}".format(model.predict(validate)))
 print('predictions shape:', predictions.shape)
+
+end = datetime.now()
+delta = end - start
+print("INFO: Training completed in {}".format(str(delta)))

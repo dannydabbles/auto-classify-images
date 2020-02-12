@@ -30,7 +30,7 @@ auto_model_dir = os.path.join(project_dir, "auto_model")
 def io_api(x_train, y_train, x_validate, y_validate, x_test, y_test):
     model = ak.ImageClassifier(
         seed=29,
-        max_trials=10,
+        max_trials=25,
         directory=auto_model_dir)
     model.fit(x_train, y_train,
               validation_data=(x_validate, y_validate),
