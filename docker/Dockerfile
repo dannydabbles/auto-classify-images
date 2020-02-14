@@ -64,7 +64,7 @@ RUN conda install -y python=${python_version} && \
       theano \
       mkdocs
 RUN git clone -b 2.3.1 git://github.com/keras-team/keras.git /src && pip install -e /src[tests] && \
-    pip install git+git://github.com/keras-team/keras.git
+    pip install git+git://github.com/keras-team/keras.git@2.3.1
 RUN conda clean -yt
 
 RUN pip install bs4 'pillow>=7.0.0' 'pycuda>=2019.1.1' 'autokeras>=1.0.0'
