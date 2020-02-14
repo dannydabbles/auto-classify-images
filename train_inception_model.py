@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+# Regular imports
 import os
 from datetime import datetime
 from PIL import Image
@@ -7,6 +8,7 @@ from IPython.display import display
 import numpy as np
 from collections import Counter
 
+# Tensorflow/Keras imports
 import tensorflow as tf
 from tensorflow import lite
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
@@ -15,66 +17,101 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Input
 from tensorflow.keras.optimizers import SGD, RMSprop
 
+# TODO: Make options for these
+# Scale all images to squares with this dimension
 image_size = 299
+# Number of images to process on each epoch
 batch_size = 32
 
+# Infer the project directory from the location of this file
 project_dir = os.path.dirname(os.path.realpath(__file__))
+# Set our tensorboard logging directory
 tensorboard_dir = os.path.join(project_dir, "logs/fit", datetime.now().strftime("%Y%m%d-%H%M%S"))
-
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
-
+# Set our image directory
 image_dir = os.path.join(project_dir, 'images')
+
+# Define our tensorboard callback
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
 
 
 def generate_data(func):
+    """Decorator function to initialize our data generators"""
     def _generate_data_fn():
         datagen = ImageDataGenerator(
+            # Make all RGB values between -1 and 1 for InceptionV3
             preprocessing_function=preprocess_input,
+            # Reserve 30% of our data for validation
             validation_split=0.3,
+            # Rotate our pictures a little
             rotation_range=5,
-            width_shift_range=0.02,
+            # Stretch our pictures a little
+            width_shift_range=0.02,  #
             height_shift_range=0.02,
             shear_range=0.02,
             zoom_range=0.02,
+            # Flip our pictures
             horizontal_flip=True,
+            # Fill in any edge gaps
             fill_mode='nearest')
         training = datagen.flow_from_directory(
+            # Select our data directory
             os.path.join(image_dir, "train"),
+            # Always shuffle our data
             shuffle=True,
+            # We're classifying things into categories (categorical cross-entropy style)
             class_mode='categorical',
+            # Set our batch size of images per epoch
             batch_size=batch_size,
+            # Make generator spit out our training set of images
             subset="training",
+            # Resize our images
             target_size=(image_size, image_size))
         validate = datagen.flow_from_directory(
+            # Select our data directory
             os.path.join(image_dir, "train"),
+            # Always shuffle our data
             shuffle=True,
+            # We're classifying things into categories (categorical cross-entropy style)
             class_mode='categorical',
+            # Set our batch size of images per epoch
             batch_size=batch_size,
+            # Make generator spit out our validation set of images
             subset="validation",
+            # Resize our images
             target_size=(image_size, image_size))
-        return func(training, validate)
 
-    return _generate_data_fn()
+        # Calculate class weights for appropriate regularization
+        counter = Counter(training.classes)
+        max_val = float(max(counter.values()))
+        class_weights = {class_id: max_val / num_images for class_id, num_images in counter.items()}
+
+        return func(training, validate, class_weights)
+    return _generate_data_fn
 
 
 @generate_data
-def train_model(training, validate):
-    label_map = dict((v, k) for k, v in training.class_indices.items())
-    print(label_map)
+def train_model(training, validate, class_weights):
+    """Train our InceptionV3 model using transfer learning from pretrained imagenet weights"""
 
+    # Print our labels
+    label_map = dict((v, k) for k, v in training.class_indices.items())
+    print("Labels: {}".format(label_map))
+
+    # Count how many classes we have
     num_classes = len(label_map.keys())
     print("Num classes: {}".format(num_classes))
 
+    # Check our training data by grabbing a single batch
     x_train, y_train = training.next()
 
-    counter = Counter(training.classes)
-    max_val = float(max(counter.values()))
-    class_weights = {class_id: max_val / num_images for class_id, num_images in counter.items()}
-
+    # Check the type of our data
     print("Data type: {}".format(type(x_train[0][0][0][0])))
 
+    # Print some label data
     for i in range(min(int(len(x_train)), 10)):
         print("Label: " + label_map[np.where(y_train[i] == 1)[0][0]])
+        # Note: This will not display on a terminal, but it's still useful to make
+        #       sure that the images can (in theory) at least load
         display(Image.fromarray((x_train[i] * 127.5 + 127.5).astype('uint8'), 'RGB'))
 
     # create the base pre-trained model
@@ -103,26 +140,34 @@ def train_model(training, validate):
 
     # compile the model (should be done *after* setting layers to non-trainable)
     model.compile(
+        # Use the RMSprop optimizer
         optimizer=RMSprop(learning_rate=0.000005, rho=0.9),
+        # Use categorical_crossentropy to calculate loss
         loss='categorical_crossentropy',
+        # Keep track of our model's accuracy
         metrics=['accuracy'])
 
     # train the model on the new data for a few epochs
     history = model.fit(
+        # Pass in our training data
         training,
+        # Perform regularization
         class_weight=class_weights,
-        # steps_per_epoch=1,
+        # Number of epochs to train
         epochs=20,
+        # Pass in our validation data
         validation_data=validate,
-        # validation_steps=1,
+        # Set our callbacks
         callbacks=[tensorboard_callback])
 
     # The returned "history" object holds a record
     # of the loss values and metric values during training
     print('\nhistory dict:', history.history)
 
+    # Print a summary of our model
     print(model.summary())
 
+    # Save our partially trained model
     model_name = "inception_model_" + datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
     model_path = os.path.join(project_dir, "models", model_name)
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
@@ -168,8 +213,10 @@ def train_model(training, validate):
     # of the loss values and metric values during training
     print('\nhistory dict:', history.history)
 
+    # Print a summary of our model
     print(model.summary())
 
+    # Save our fully trained model
     model_name = "inception_model_" + datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
     model_path = os.path.join(project_dir, "models", model_name)
     model.save(model_path + ".h5")
@@ -181,18 +228,20 @@ def train_model(training, validate):
     results = model.evaluate(validate)
     print('test loss, test acc:', results)
 
-    print('\n# Generate predictions for 3 samples')
+    # Generate some predictions
+    print('\n# Generate predictions')
     print("INFO: Predictions is {}".format(model.predict(validate)))
     print('predictions shape:', predictions.shape)
 
 
 def main():
-    print("INFO: Training started with size {}".format(image_size))
-
+    # Print some debug information about our GPU
     print(tf.config.experimental.list_physical_devices(device_type=None))
+    # Try and limit memory growth on our GPU(s) (if we have any)
     for gpu in tf.config.experimental.list_physical_devices(device_type='GPU'):
         tf.config.experimental.set_memory_growth(gpu, True)
 
+    # Train our model
     start = datetime.now()
     print("INFO: Training started with image size {} and batch size {}".format(image_size, batch_size))
     train_model()
