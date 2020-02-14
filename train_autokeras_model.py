@@ -51,8 +51,8 @@ def generate_data(func):
             # Fill in any edge gaps
             fill_mode='nearest')
         training = datagen.flow_from_directory(
-            # Select our data directory
-            os.path.join(image_dir, "train"),
+            # Select our image data directory
+            image_dir,
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
@@ -66,8 +66,8 @@ def generate_data(func):
             # Resize our images
             target_size=(image_size, image_size))
         validate = datagen.flow_from_directory(
-            # Select our data directory
-            os.path.join(image_dir, "train"),
+            # Select our image data directory
+            image_dir,
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
