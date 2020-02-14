@@ -24,8 +24,8 @@ notebook: build
 test: build
 	docker run --gpus all -it --env KERAS_BACKEND=$(BACKEND) keras py.test $(TEST)
 
-inception:
+inception: build
 	docker run --gpus all -it --net=host --env KERAS_BACKEND=$(BACKEND) -v $(SRC):/src/auto_classify_images keras python /src/auto_classify_images/train_inception_model.py
 
-autokeras:
+autokeras: build
 	docker run --gpus all -it --net=host --env KERAS_BACKEND=$(BACKEND) -v $(SRC):/src/auto_classify_images keras python /src/auto_classify_images/train_autokeras_model.py
