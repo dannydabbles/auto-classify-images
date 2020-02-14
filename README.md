@@ -1,6 +1,6 @@
 # auto-classify-images
 
-A simple framework to automate image classification.  Simply fill up the image directory with labeled subdirectories, and then fill each subdirectory with representative images.  Then run one of the following two commands to begin training.
+A simple framework to automate image classification.  Simply fill up the image directory with labeled subdirectories, and then fill each subdirectory with representative images.  Then run one of the two shell scripts below to begin training.
 
 ## Loading cifar10 example data
 
