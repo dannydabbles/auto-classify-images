@@ -161,12 +161,12 @@ def generate_model(x_train, y_train, x_validate, y_validate, x_test, y_test, cla
 
     # Evaluate the model on the test data using `evaluate`
     print('\n# Evaluate on test data')
-    results = model.evaluate(validate)
+    results = model.evaluate(x_test, y_test)
     print('test loss, test acc:', results)
 
     # Generate some predictions
     print('\n# Generate predictions')
-    print("INFO: Predictions is {}".format(model.predict(validate)))
+    print("INFO: Predictions is {}".format(model.predict(x_test, y_test)))
 
 
 def main():
