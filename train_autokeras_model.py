@@ -20,12 +20,15 @@ image_size = 75
 # Number of images to process on each epoch
 batch_size = 32
 
+# Set the time
+time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+
 # Infer the project directory from the location of this file
 project_dir = os.path.dirname(os.path.realpath(__file__))
 # Set our image directory
 image_dir = os.path.join(project_dir, "images")
 # Set our tensorboard logging directory
-tensorboard_dir = os.path.join(project_dir, "logs/fit", datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_dir = os.path.join(project_dir, "logs/fit", time)
 # Set our auto_model directory for storing candidate autokeras model information
 auto_model_dir = os.path.join(project_dir, "auto_model")
 
@@ -107,7 +110,13 @@ def unpack_data(func):
 
         # Print our labels
         label_map = dict((v, k) for k, v in training.class_indices.items())
-        print(label_map)
+        print("Labels: {}".format(label_map))
+        # Write our labels to a file
+        model_name = "autokeras_model_" + time
+        model_path = os.path.join(project_dir, "models", model_name)
+        with open(model_path + ".txt", "w") as labels_file:
+            for label in sorted(label_map.keys()):
+                labels_file.write("{}\n".format(label))
 
         # Unpack our training data
         x_train, y_train = training.next()
@@ -151,7 +160,7 @@ def generate_model(x_train, y_train, x_validate, y_validate, x_test, y_test, cla
               batch_size=batch_size)
 
     # The best model found during the Neural Architecture Search
-    model_name = "autokeras_model_" + datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+    model_name = "autokeras_model_" + time
     model_path = os.path.join(project_dir, "models", model_name)
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     model = model.export_model()

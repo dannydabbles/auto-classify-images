@@ -23,10 +23,13 @@ image_size = 299
 # Number of images to process on each epoch
 batch_size = 32
 
+# Set the time
+time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+
 # Infer the project directory from the location of this file
 project_dir = os.path.dirname(os.path.realpath(__file__))
 # Set our tensorboard logging directory
-tensorboard_dir = os.path.join(project_dir, "logs/fit", datetime.now().strftime("%Y%m%d-%H%M%S"))
+tensorboard_dir = os.path.join(project_dir, "logs/fit", time)
 # Set our image directory
 image_dir = os.path.join(project_dir, 'images')
 
@@ -96,6 +99,12 @@ def train_model(training, validate, class_weights):
     # Print our labels
     label_map = dict((v, k) for k, v in training.class_indices.items())
     print("Labels: {}".format(label_map))
+    # Write our labels to a file
+    model_name = "inception_model_" + time
+    model_path = os.path.join(project_dir, "models", model_name)
+    with open(model_path + ".txt", "w") as labels_file:
+        for label in sorted(label_map.keys()):
+            labels_file.write("{}\n".format(label))
 
     # Count how many classes we have
     num_classes = len(label_map.keys())
@@ -168,7 +177,7 @@ def train_model(training, validate, class_weights):
     print(model.summary())
 
     # Save our partially trained model
-    model_name = "inception_model_" + datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+    model_name = "inception_model_" + time
     model_path = os.path.join(project_dir, "models", model_name)
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     model.save(model_path + "_half.h5")
@@ -217,7 +226,7 @@ def train_model(training, validate, class_weights):
     print(model.summary())
 
     # Save our fully trained model
-    model_name = "inception_model_" + datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+    model_name = "inception_model_" + time
     model_path = os.path.join(project_dir, "models", model_name)
     model.save(model_path + ".h5")
     tflite_model = lite.TFLiteConverter.from_keras_model(model).convert()
