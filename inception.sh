@@ -1,3 +1,3 @@
 #!/bin/bash
 
-make BACKEND=tensorflow inception
+make inception
