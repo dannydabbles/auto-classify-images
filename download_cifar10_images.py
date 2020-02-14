@@ -34,6 +34,8 @@ def main():
         # Save the image data to a file
         im = Image.fromarray(image)
         im.save(image_path)
+        
+    print("Downladed {} images".format(len(y)))
 
 if __name__ == "__main__":
     main()
