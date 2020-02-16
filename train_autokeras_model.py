@@ -175,7 +175,7 @@ def generate_model(x_train, y_train, x_validate, y_validate, x_test, y_test, cla
 
     # Generate some predictions
     print('\n# Generate predictions')
-    print("INFO: Predictions is {}".format(model.predict(x_test, y_test)))
+    print("INFO: Predictions is {}".format(model.predict(x_test)))
 
 
 def main():
