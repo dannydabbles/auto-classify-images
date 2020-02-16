@@ -160,7 +160,7 @@ class AutoKerasClassify:
         model_name = "autokeras_model_" + self.time
         model_path = os.path.join(self.project_dir, "models", model_name)
         with open(model_path + ".txt", "w") as labels_file:
-            for label in sorted(label_map.keys()):
+            for label in sorted(label_map.values()):
                 labels_file.write("{}\n".format(label))
 
         # Unpack our training data
