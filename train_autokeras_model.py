@@ -16,6 +16,8 @@ import autokeras as ak
 
 
 class AutoKerasClassify:
+    """Class to manage the Auto Keras training process"""
+
     # TODO: Make options for these
     # Scale all images to squares with this dimension
     image_size = None
@@ -59,7 +61,8 @@ class AutoKerasClassify:
             self.tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir, histogram_freq=1)
 
     def generate_data(self):
-        """Decorator function to initialize our data generators"""
+        """Function to initialize our data generators"""
+
         datagen = ImageDataGenerator(
             # Reserve 30% of our data for validation
             validation_split=0.2,
@@ -138,8 +141,8 @@ class AutoKerasClassify:
         return training, validate, testing, class_weights
 
     def unpack_data(self, training, validate, testing, class_weights=None):
-
         """Since autokeras' fit() function does not accept data generators, let's unpack them"""
+
         # Unpack our validation data generator
         x_validate, y_validate = validate.next()
         x_validate = x_validate.astype('uint8')
@@ -179,6 +182,7 @@ class AutoKerasClassify:
 
     def generate_model(self, x_train, y_train, x_validate, y_validate, x_test, y_test, class_weights=None):
         """Use AutoKeras to run a Neural Architecture Search"""
+
         model = ak.ImageClassifier(
             # Select a random seed value
             seed=29,
@@ -215,6 +219,8 @@ class AutoKerasClassify:
         print("INFO: Predictions is {}".format(model.predict(x_test)))
 
     def run(self):
+        """Kick off training"""
+
         # Print some debug information about our GPU
         print(tf.config.experimental.list_physical_devices(device_type=None))
         # Try and limit memory growth on our GPU(s) (if we have any)

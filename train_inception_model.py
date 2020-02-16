@@ -19,6 +19,8 @@ from tensorflow.keras.optimizers import SGD, RMSprop
 
 
 class InceptionClassify:
+    """Class to manage the Inception training process"""
+
     # TODO: Make options for these
     # Scale all images to squares with this dimension
     image_size = None
@@ -61,6 +63,7 @@ class InceptionClassify:
 
     def generate_data(self):
         """Decorator function to initialize our data generators"""
+
         datagen = ImageDataGenerator(
             # Make all RGB values between -1 and 1 for InceptionV3
             preprocessing_function=preprocess_input,
@@ -286,6 +289,8 @@ class InceptionClassify:
         print('predictions shape:', predictions.shape)
 
     def run(self):
+        """Kick off training"""
+
         # Print some debug information about our GPU
         print(tf.config.experimental.list_physical_devices(device_type=None))
         # Try and limit memory growth on our GPU(s) (if we have any)
