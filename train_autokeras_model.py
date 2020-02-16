@@ -62,7 +62,7 @@ class AutoKerasClassify:
         """Decorator function to initialize our data generators"""
         datagen = ImageDataGenerator(
             # Reserve 30% of our data for validation
-            validation_split=0.3,
+            validation_split=0.2,
             # Rotate our pictures a little
             rotation_range=5,
             # Stretch our pictures a little
@@ -74,10 +74,9 @@ class AutoKerasClassify:
             horizontal_flip=True,
             # Fill in any edge gaps
             fill_mode='nearest')
-
         training = datagen.flow_from_directory(
             # Select our image data directory
-            self.image_dir,
+            os.path.join(self.image_dir, "train"),
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
@@ -92,7 +91,7 @@ class AutoKerasClassify:
             target_size=(self.image_size, self.image_size))
         validate = datagen.flow_from_directory(
             # Select our image data directory
-            self.image_dir,
+            os.path.join(self.image_dir, "train"),
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
@@ -105,15 +104,40 @@ class AutoKerasClassify:
             subset="validation",
             # Resize our images
             target_size=(self.image_size, self.image_size))
+        datagen = ImageDataGenerator(
+            # Rotate our pictures a little
+            rotation_range=5,
+            # Stretch our pictures a little
+            width_shift_range=0.02,
+            height_shift_range=0.02,
+            shear_range=0.02,
+            zoom_range=0.02,
+            # Flip our pictures
+            horizontal_flip=True,
+            # Fill in any edge gaps
+            fill_mode='nearest')
+        testing = datagen.flow_from_directory(
+            # Select our image data directory
+            os.path.join(self.image_dir, "test"),
+            # Always shuffle our data
+            shuffle=True,
+            # We're classifying things into categories (categorical cross-entropy style)
+            class_mode='categorical',
+            # Set our batch size of images for training the model (different from inception)
+            # Note: This is set so high because we can't use a generator to generate images in several small batches
+            #       So, we just get all our images at once.
+            batch_size=50000,
+            # Resize our images
+            target_size=(self.image_size, self.image_size))
 
         # Calculate class weights for appropriate regularization
         counter = Counter(training.classes)
         max_val = float(max(counter.values()))
         class_weights = {class_id: max_val / num_images for class_id, num_images in counter.items()}
 
-        return training, validate, class_weights
+        return training, validate, testing, class_weights
 
-    def unpack_data(self, training, validate, class_weights=None):
+    def unpack_data(self, training, validate, testing, class_weights=None):
 
         """Since autokeras' fit() function does not accept data generators, let's unpack them"""
         # Unpack our validation data generator
@@ -122,11 +146,9 @@ class AutoKerasClassify:
         y_validate = y_validate.astype('uint8')
 
         # Unpack our test and validation data
-        split_num = int(len(x_validate) * .25)
-        x_test = x_validate[:split_num]
-        y_test = y_validate[:split_num],
-        x_vaidate = x_validate[split_num:]
-        y_vaidate = y_validate[split_num:]
+        x_test, y_test = testing.next()
+        x_test = x_test.astype('uint8')
+        y_test = y_test.astype('uint8')
 
         # Print our labels
         label_map = dict((v, k) for k, v in training.class_indices.items())

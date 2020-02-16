@@ -39,13 +39,13 @@ class InceptionClassify:
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
 
     def __init__(self,
-                 image_size = 299,
-                 batch_size = 32,
-                 time = None,
-                 project_dir = None,
-                 tensorboard_dir = None,
-                 image_dir = None,
-                 tensorboard_callback = None):
+                 image_size=299,
+                 batch_size=32,
+                 time=None,
+                 project_dir=None,
+                 tensorboard_dir=None,
+                 image_dir=None,
+                 tensorboard_callback=None):
         self.image_size = image_size
         self.batch_size = batch_size
         if time is None:
@@ -65,7 +65,7 @@ class InceptionClassify:
             # Make all RGB values between -1 and 1 for InceptionV3
             preprocessing_function=preprocess_input,
             # Reserve 30% of our data for validation
-            validation_split=0.3,
+            validation_split=0.2,
             # Rotate our pictures a little
             rotation_range=5,
             # Stretch our pictures a little
@@ -79,7 +79,7 @@ class InceptionClassify:
             fill_mode='nearest')
         training = datagen.flow_from_directory(
             # Select our image data directory
-            self.image_dir,
+            os.path.join(self.image_dir, "train"),
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
@@ -92,7 +92,7 @@ class InceptionClassify:
             target_size=(self.image_size, self.image_size))
         validate = datagen.flow_from_directory(
             # Select our image data directory
-            self.image_dir,
+            os.path.join(self.image_dir, "train"),
             # Always shuffle our data
             shuffle=True,
             # We're classifying things into categories (categorical cross-entropy style)
@@ -103,16 +103,40 @@ class InceptionClassify:
             subset="validation",
             # Resize our images
             target_size=(self.image_size, self.image_size))
+        datagen = ImageDataGenerator(
+            # Make all RGB values between -1 and 1 for InceptionV3
+            preprocessing_function=preprocess_input,
+            # Rotate our pictures a little
+            rotation_range=5,
+            # Stretch our pictures a little
+            width_shift_range=0.02,  #
+            height_shift_range=0.02,
+            shear_range=0.02,
+            zoom_range=0.02,
+            # Flip our pictures
+            horizontal_flip=True,
+            # Fill in any edge gaps
+            fill_mode='nearest')
+        testing = datagen.flow_from_directory(
+            # Select our image data directory
+            os.path.join(self.image_dir, "test"),
+            # Always shuffle our data
+            shuffle=True,
+            # We're classifying things into categories (categorical cross-entropy style)
+            class_mode='categorical',
+            # Set our batch size of images per epoch
+            batch_size=self.batch_size,
+            # Resize our images
+            target_size=(self.image_size, self.image_size))
 
         # Calculate class weights for appropriate regularization
         counter = Counter(training.classes)
         max_val = float(max(counter.values()))
         class_weights = {class_id: max_val / num_images for class_id, num_images in counter.items()}
 
-        return training, validate, class_weights
+        return training, validate, testing, class_weights
 
-
-    def train_model(self, training, validate, class_weights):
+    def train_model(self, training, validate, testing, class_weights):
         """Train our InceptionV3 model using transfer learning from pretrained imagenet weights"""
 
         # Print our labels
@@ -253,14 +277,13 @@ class InceptionClassify:
 
         # Evaluate the model on the test data using `evaluate`
         print('\n# Evaluate on test data')
-        results = model.evaluate(validate)
+        results = model.evaluate(testing)
         print('test loss, test acc:', results)
 
         # Generate some predictions
         print('\n# Generate predictions')
-        print("INFO: Predictions is {}".format(model.predict(validate)))
+        print("INFO: Predictions is {}".format(model.predict(testing)))
         print('predictions shape:', predictions.shape)
-
 
     def run(self):
         # Print some debug information about our GPU

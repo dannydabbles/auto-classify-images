@@ -16,26 +16,30 @@ def main():
     (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 
     # Combine training and test data so we can dump everything to a single folder
-    x = [*x_train, *x_test]
-    y = [*y_train, *y_test]
+    training = (x_train, y_train, "train")
+    validation = (x_test, y_test, "test")
 
-    # Step through our images
-    for i, item in enumerate(y):
-        # Grab our image data
-        image = x[i]
-        # Grab our label
-        label = cifar10_classes[item[0]]
+    for x, y, dirname in [training, validation]:
+        # Step through our images
+        for i, item in enumerate(y):
+            # Grab our image data
+            image = x[i]
+            # Grab our label
+            label = cifar10_classes[item[0]]
 
-        # Generate an image path
-        image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "images", label,
-                                  "{}.jpg".format(i))
-        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            # Generate an image path
+            image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                      "images",
+                                      dirname,
+                                      label,
+                                      "{}.jpg".format(i))
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
 
-        # Save the image data to a file
-        im = Image.fromarray(image)
-        im.save(image_path)
-        
-    print("Downladed {} images".format(len(y)))
+            # Save the image data to a file
+            im = Image.fromarray(image)
+            im.save(image_path)
+
+        print("Downladed {} images".format(len(y)))
 
 if __name__ == "__main__":
     main()
