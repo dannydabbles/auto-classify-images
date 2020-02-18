@@ -187,7 +187,7 @@ class AutoKerasClassify:
             # Select a random seed value
             seed=29,
             # Decide how many models to try out
-            max_trials=25,
+            max_trials=15,
             # Set our auto_model directory for storing candidate models
             directory=self.auto_model_dir)
         model.fit(x_train, y_train,
